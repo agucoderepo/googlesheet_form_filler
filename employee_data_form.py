@@ -32,11 +32,19 @@ def get_google_sheets_client():
             # For Streamlit Cloud deployment
             import json
             creds_dict = st.secrets['google_sheets_credentials']
+            # Handle case where credentials might be stored as string
+            if isinstance(creds_dict, str):
+                creds_dict = json.loads(creds_dict)
             creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
         elif os.getenv('GOOGLE_SHEETS_CREDENTIALS'):
             # For local development with .env file
             import json
-            creds_dict = json.loads(os.getenv('GOOGLE_SHEETS_CREDENTIALS'))
+            creds_str = os.getenv('GOOGLE_SHEETS_CREDENTIALS')
+            # Handle case where credentials might be stored as string
+            if isinstance(creds_str, str):
+                creds_dict = json.loads(creds_str)
+            else:
+                creds_dict = creds_str
             creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
         else:
             # For local development - read from JSON file
