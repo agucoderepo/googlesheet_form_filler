@@ -34,7 +34,12 @@ def get_google_sheets_client():
             creds_dict = st.secrets['google_sheets_credentials']
             # Handle case where credentials might be stored as string
             if isinstance(creds_dict, str):
-                creds_dict = json.loads(creds_dict)
+                try:
+                    creds_dict = json.loads(creds_dict)
+                except json.JSONDecodeError as e:
+                    st.error(f"Invalid JSON format in credentials: {e}")
+                    st.info("Please check your Streamlit secrets format")
+                    return None
             creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
         elif os.getenv('GOOGLE_SHEETS_CREDENTIALS'):
             # For local development with .env file
@@ -91,72 +96,76 @@ if st.button("Submit"):
             
             # Append the new row
             worksheet.append_row(new_row)
-            
-            st.success("Data saved to Google Sheets successfully!")
-            
-            # Display the updated data
-            st.subheader("Current Data in Google Sheets:")
-            data = worksheet.get_all_records()
-            if data:
-                df = pd.DataFrame(data)
-                st.dataframe(df)
+            if os.getenv('dev') == 'True':
+                st.success("Data saved to Google Sheets successfully!")
+                
+                # Display the updated data
+                st.subheader("Current Data in Google Sheets:")
+                data = worksheet.get_all_records()
+                if data:
+                    df = pd.DataFrame(data)
+                    st.dataframe(df)
+                else:
+                    st.info("No data found in the sheet.")
             else:
-                st.info("No data found in the sheet.")
+                st.success("Thanks :)!!")
                 
         except Exception as e:
             st.error(f"Error saving data: {e}")
-            st.info("Make sure you have:")
-            st.info("1. Created a Google Cloud Project")
-            st.info("2. Enabled Google Sheets API")
-            st.info("3. Created a service account and downloaded the JSON key file")
-            st.info("4. Shared your Google Sheet with the service account email")
-            st.info("5. Updated the SHEET_ID variable with your actual Google Sheet ID")
+            if os.getenv('dev') == 'True':
+                st.info("Make sure you have:")
+                st.info("1. Created a Google Cloud Project")
+                st.info("2. Enabled Google Sheets API")
+                st.info("3. Created a service account and downloaded the JSON key file")
+                st.info("4. Shared your Google Sheet with the service account email")
+                st.info("5. Updated the SHEET_ID variable with your actual Google Sheet ID")
 
-# Instructions for setup
-with st.expander("Setup Instructions"):
-    st.markdown("""
-    ### To use Google Sheets instead of Excel, follow these steps:
-    
-    1. **Create a Google Cloud Project:**
-       - Go to [Google Cloud Console](https://console.cloud.google.com/)
-       - Create a new project or select an existing one
-    
-    2. **Enable Google Sheets API:**
-       - In the Google Cloud Console, go to "APIs & Services" > "Library"
-       - Search for "Google Sheets API" and enable it
-    
-    3. **Create a Service Account:**
-       - Go to "APIs & Services" > "Credentials"
-       - Click "Create Credentials" > "Service Account"
-       - Fill in the details and create the account
-       - Click on the service account email
-       - Go to "Keys" tab and create a new JSON key
-       - Download the JSON file
-    
-    4. **Configure Credentials (Choose one method):**
-       
-       **Method A - Local Development with JSON file:**
-       - Save the JSON file as `service_account_key.json` in your project directory
-       
-       **Method B - Local Development with .env file:**
-       - Create a `.env` file in your project directory
-       - Add: `GOOGLE_SHEET_ID=your_sheet_id_here`
-       - Add: `GOOGLE_SHEETS_CREDENTIALS={"type":"service_account",...}` (copy entire JSON content)
-       
-       **Method C - Streamlit Cloud Deployment:**
-       - In Streamlit Cloud, add secrets:
-         - `google_sheet_id`: your Google Sheet ID
-         - `google_sheets_credentials`: entire JSON content as a string
-    
-    5. **Create a Google Sheet:**
-       - Create a new Google Sheet
-       - Copy the Sheet ID from the URL (the long string between /d/ and /edit)
-       - Set it in your chosen configuration method
-    
-    6. **Share the Sheet:**
-       - Share your Google Sheet with the service account email (found in the JSON file)
-       - Give it "Editor" permissions
-    
-    7. **Install Dependencies:**
-       - Run: `pip install -r requirements.txt`
-    """)
+# Instructions for setup - only show in development mode
+if os.getenv('dev') == 'True':
+    with st.expander("Setup Instructions"):
+        st.markdown("""
+        ### To use Google Sheets instead of Excel, follow these steps:
+        
+        1. **Create a Google Cloud Project:**
+           - Go to [Google Cloud Console](https://console.cloud.google.com/)
+           - Create a new project or select an existing one
+        
+        2. **Enable Google Sheets API:**
+           - In the Google Cloud Console, go to "APIs & Services" > "Library"
+           - Search for "Google Sheets API" and enable it
+        
+        3. **Create a Service Account:**
+           - Go to "APIs & Services" > "Credentials"
+           - Click "Create Credentials" > "Service Account"
+           - Fill in the details and create the account
+           - Click on the service account email
+           - Go to "Keys" tab and create a new JSON key
+           - Download the JSON file
+        
+        4. **Configure Credentials (Choose one method):**
+           
+           **Method A - Local Development with JSON file:**
+           - Save the JSON file as `service_account_key.json` in your project directory
+           
+           **Method B - Local Development with .env file:**
+           - Create a `.env` file in your project directory
+           - Add: `GOOGLE_SHEET_ID=your_sheet_id_here`
+           - Add: `GOOGLE_SHEETS_CREDENTIALS={"type":"service_account",...}` (copy entire JSON content)
+           
+           **Method C - Streamlit Cloud Deployment:**
+           - In Streamlit Cloud, add secrets:
+             - `google_sheet_id`: your Google Sheet ID
+             - `google_sheets_credentials`: entire JSON content as a string
+        
+        5. **Create a Google Sheet:**
+           - Create a new Google Sheet
+           - Copy the Sheet ID from the URL (the long string between /d/ and /edit)
+           - Set it in your chosen configuration method
+        
+        6. **Share the Sheet:**
+           - Share your Google Sheet with the service account email (found in the JSON file)
+           - Give it "Editor" permissions
+        
+        7. **Install Dependencies:**
+           - Run: `pip install -r requirements.txt`
+        """)
