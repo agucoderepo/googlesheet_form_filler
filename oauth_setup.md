@@ -104,8 +104,36 @@ google_sheets_credentials = "{\"type\":\"service_account\",...}"
 
 2. Navigate to `http://localhost:8501`
 3. You should see the Google authentication screen
-4. Sign in with your Google account
-5. Test the form submission
+4. Click "Sign in with Google" - this will open Google's login page in a new tab
+5. Complete the Google sign-in process
+6. You'll be redirected back to your application
+
+## Important Notes About OAuth Flow
+
+### X-Frame-Options Issue
+
+Google's OAuth pages have `X-Frame-Options: deny` which prevents them from being embedded in iframes. Our implementation handles this by:
+
+1. **Opening Google OAuth in a new tab** (`target="_blank"`)
+2. **Providing manual URL option** if the button doesn't work
+3. **Clear instructions** for users about the OAuth flow
+
+### Redirect URI Configuration
+
+Make sure your redirect URIs in Google Cloud Console exactly match your application URLs:
+
+- **Local development**: `http://localhost:8501`
+- **Streamlit Cloud**: `https://your-app-name.streamlit.app`
+
+### OAuth Flow Process
+
+1. User clicks "Sign in with Google"
+2. Google OAuth page opens in new tab
+3. User signs in with Google account
+4. Google redirects back to your app with authorization code
+5. App exchanges code for access token
+6. App gets user information from Google
+7. User is authenticated and can access the application
 
 ## Troubleshooting
 
@@ -120,12 +148,17 @@ google_sheets_credentials = "{\"type\":\"service_account\",...}"
    - For local development, use `http://localhost:8501`
    - For production, use your actual Streamlit app URL
 
-3. **"Access denied" when accessing Google Sheets**
+3. **"X-Frame-Options" error**
+   - This is expected behavior - Google prevents embedding their OAuth page
+   - Use the new tab approach or copy the OAuth URL manually
+   - The app will handle the redirect properly
+
+4. **"Access denied" when accessing Google Sheets**
    - Make sure the service account email has access to the Google Sheet
    - Verify that the Google Sheets API is enabled
    - Check that the service account JSON file is correctly configured
 
-4. **"Client ID not found" error**
+5. **"Client ID not found" error**
    - Ensure the Google OAuth2 API is enabled in your Google Cloud Project
    - Verify that the client ID is correctly copied from Google Cloud Console
 

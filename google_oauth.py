@@ -182,14 +182,22 @@ def authenticate_with_google():
             elif submitted:
                 st.error("Please fill in all fields and confirm your Google account.")
     else:
-        # Real Google OAuth - no form needed
+        # Real Google OAuth - handle X-Frame-Options issue
         st.markdown("### 🔐 Google Authentication")
         
         auth_url = oauth.get_authorization_url()
         if auth_url:
+            # Display instructions for OAuth flow
+            st.info("""
+            **Important:** Click the button below to sign in with Google. 
+            You'll be redirected to Google's secure login page in a new tab.
+            After signing in, you'll be redirected back to this application.
+            """)
+            
+            # Create a button that opens in new tab
             st.markdown(f"""
             <div style="text-align: center;">
-                <a href="{auth_url}" target="_self">
+                <a href="{auth_url}" target="_blank" rel="noopener noreferrer">
                     <button style="
                         background-color: #4285f4;
                         color: white;
@@ -208,6 +216,16 @@ def authenticate_with_google():
                 </a>
             </div>
             """, unsafe_allow_html=True)
+            
+            # Add manual redirect option
+            st.markdown("---")
+            st.markdown("**Alternative:** If the button doesn't work, copy and paste this URL into your browser:")
+            st.code(auth_url)
+            
+            # Check if user has completed OAuth
+            if st.button("✅ I've completed Google sign-in", type="secondary"):
+                st.info("Please check the URL in your browser for the authorization code, or refresh this page if you've been redirected back.")
+                
         else:
             st.error("Failed to generate OAuth URL. Please check your configuration.")
     
